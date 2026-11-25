@@ -47,11 +47,15 @@ class CODWarden_Admin {
 	 * @return array
 	 */
 	private static function tabs() {
-		return array(
+		$tabs = array(
 			'overview' => __( 'Overview', 'codwarden' ),
 			'settings' => __( 'Settings', 'codwarden' ),
 			'phones'   => __( 'Phone list', 'codwarden' ),
 		);
+		if ( ! class_exists( 'CWP_Plugin' ) ) {
+			$tabs['pro'] = __( 'Pro', 'codwarden' );
+		}
+		return $tabs;
 	}
 
 	/**
@@ -87,7 +91,7 @@ class CODWarden_Admin {
 		);
 		add_menu_page( __( 'CODWarden', 'codwarden' ), __( 'CODWarden', 'codwarden' ), self::CAP, self::PAGE, array( __CLASS__, 'render' ), $icon, 57 );
 		add_submenu_page( self::PAGE, __( 'Overview', 'codwarden' ), __( 'Overview', 'codwarden' ), self::CAP, self::PAGE, array( __CLASS__, 'render' ) );
-		foreach ( array( 'settings', 'phones' ) as $tab ) {
+		foreach ( array_intersect( array_keys( self::tabs() ), array( 'settings', 'phones', 'pro' ) ) as $tab ) {
 			$tabs = self::tabs();
 			add_submenu_page( self::PAGE, $tabs[ $tab ], $tabs[ $tab ], self::CAP, 'admin.php?page=' . self::PAGE . '&tab=' . $tab );
 		}
@@ -202,7 +206,7 @@ class CODWarden_Admin {
 				</div>
 				<nav class="codwarden-tabs" aria-label="<?php esc_attr_e( 'CODWarden sections', 'codwarden' ); ?>">
 					<?php foreach ( self::tabs() as $key => $label ) : ?>
-						<a href="<?php echo esc_url( self::url( $key ) ); ?>"<?php echo $key === $tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
+						<a href="<?php echo esc_url( self::url( $key ) ); ?>"<?php echo 'pro' === $key ? ' class="ow-tab-pro"' : ''; ?><?php echo $key === $tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
 					<?php endforeach; ?>
 				</nav>
 			</div>
@@ -215,6 +219,8 @@ class CODWarden_Admin {
 				self::render_settings();
 			} elseif ( 'phones' === $tab ) {
 				self::render_phones();
+			} elseif ( 'pro' === $tab ) {
+				self::render_pro();
 			} else {
 				self::render_overview();
 			}
@@ -647,5 +653,49 @@ class CODWarden_Admin {
 		CODWarden_Store::set_blocked( CODWarden_Phone::hash( $phone ), CODWarden_Phone::mask( $phone ), true );
 		wp_safe_redirect( self::url( 'phones', array( 'cw_msg' => 'blocked' ) ) );
 		exit;
+	}
+	/**
+	 * Pro page: what the add-on adds. Shows "Coming soon" until a store link is set.
+	 *
+	 * @return void
+	 */
+	private static function render_pro() {
+		$points = array(
+			__( 'Confirmation email with a confirm or cancel page, no SMS service needed', 'codwarden' ),
+			__( 'Keep new orders On hold until the customer confirms', 'codwarden' ),
+			__( 'Auto-cancel orders with no answer, stock comes back', 'codwarden' ),
+			__( 'Mark confirmed after a call, or ask on WhatsApp in one click', 'codwarden' ),
+			__( '30 day report and CSV export for your courier', 'codwarden' ),
+			__( 'Alerts on Slack, Discord, Telegram or any webhook', 'codwarden' ),
+		);
+		/**
+		 * Where to buy CODWarden Pro. Empty shows "Coming soon".
+		 *
+		 * @param string $url URL.
+		 */
+		$buy = (string) apply_filters( 'codwarden_pro_url', '' );
+		?>
+		<section class="ow-sale">
+			<div class="ow-sale-main">
+				<h2><?php esc_html_e( 'CODWarden Pro', 'codwarden' ); ?></h2>
+				<p><?php esc_html_e( 'Customers confirm their cash on delivery order before you ship it, and orders nobody confirms cancel themselves.', 'codwarden' ); ?></p>
+				<ul class="ow-points">
+					<?php foreach ( $points as $point ) : ?>
+						<li><?php echo esc_html( $point ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+			<div class="ow-sale-aside">
+				<span class="ow-pro-badge"><?php esc_html_e( 'Pro', 'codwarden' ); ?></span>
+				<h3 style="margin-top:14px"><?php esc_html_e( 'A separate add-on', 'codwarden' ); ?></h3>
+				<p><?php esc_html_e( 'Everything you use today stays free, with no limits. Pro adds the features on the left.', 'codwarden' ); ?></p>
+				<?php if ( '' === $buy ) : ?>
+					<p><strong><?php esc_html_e( 'Coming soon.', 'codwarden' ); ?></strong></p>
+				<?php else : ?>
+					<a class="button ow-btn-gold" href="<?php echo esc_url( $buy ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'See plans', 'codwarden' ); ?></a>
+				<?php endif; ?>
+			</div>
+		</section>
+		<?php
 	}
 }
