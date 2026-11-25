@@ -69,8 +69,22 @@ class CODWarden_Phone {
 			return '';
 		}
 
+		$code = '';
+		if ( function_exists( 'WC' ) && WC()->countries && method_exists( WC()->countries, 'get_country_calling_code' ) ) {
+			$code = ltrim( (string) WC()->countries->get_country_calling_code( $country ), '+' );
+		}
+		if ( '' !== $code && 0 === strpos( $digits, '00' . $code ) ) {
+			$digits = substr( $digits, 2 );
+		}
 		$digits = ltrim( $digits, '0' );
-		return ( strlen( $digits ) >= 7 && strlen( $digits ) <= 15 ) ? $digits : '';
+		if ( '' !== $code && 0 === strpos( $digits, $code ) && strlen( $digits ) - strlen( $code ) >= 7 ) {
+			$digits = substr( $digits, strlen( $code ) );
+		}
+		$digits = ltrim( $digits, '0' );
+		if ( strlen( $digits ) < 6 || strlen( $digits ) > 14 ) {
+			return '';
+		}
+		return $code . $digits;
 	}
 
 	/**
