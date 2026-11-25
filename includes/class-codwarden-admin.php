@@ -208,7 +208,7 @@ class CODWarden_Admin {
 			</div>
 			<hr class="wp-header-end">
 			<?php
-			if ( ! isset( WC()->payment_gateways ) || ! array_key_exists( 'cod', WC()->payment_gateways()->payment_gateways() ) ) {
+			if ( ! array_key_exists( 'cod', WC()->payment_gateways()->payment_gateways() ) ) {
 				echo '<div class="notice notice-warning"><p>' . esc_html__( 'The WooCommerce Cash on delivery payment method was not found. CODWarden only acts on that method.', 'codwarden' ) . '</p></div>';
 			}
 			if ( 'settings' === $tab ) {
